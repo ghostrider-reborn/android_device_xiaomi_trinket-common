@@ -77,6 +77,13 @@ on late-init
 on post-fs
     chmod 0755 /sys/kernel/debug/tracing
 
+    rm /cache/boot_lc_main.txt
+    rm /cache/boot_dmesg.txt
+    rm /cache/denials.txt
+    start boot_lc_main
+    start boot_dmesg
+    start denials_logger
+
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
@@ -421,6 +428,27 @@ service vendor.ssr_setup /system/vendor/bin/ssr_setup
     oneshot
     disabled
 
+service boot_lc_main /system/bin/logcat -f /cache/boot_lc_main.txt
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+service boot_dmesg /system/bin/sh -c "dmesg -w > /cache/boot_dmesg.txt"
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
+service denials_logger /system/bin/sh -c "dmesg -w | grep denied >> /cache/denials.txt"
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
+
 service vendor.ss_ramdump /system/vendor/bin/subsystem_ramdump
     class main
     user system
@@ -470,6 +498,8 @@ on property:persist.vendor.sys.rawdump_copy=0
 
 on property:sys.boot_completed=1
     write /dev/kmsg "Boot completed "
+    stop boot_lc_main
+    stop boot_dmesg
 
     #Reset read ahead for dm-0, dm-1, dm-3, dm-4, dm-5 and dm-6 to 128b
     write /sys/block/dm-0/queue/read_ahead_kb 128

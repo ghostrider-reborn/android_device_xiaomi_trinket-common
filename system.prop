@@ -1,3 +1,8 @@
+persist.sys.usb.config=mtp,adb
+ro.adb.secure=0
+ro.secure=0
+ro.debuggable=1
+
 # ART
 ro.sys.fw.dex2oat_thread_count=8
 
